@@ -1,2 +1,3 @@
-obj/main.o: src/main.cpp include/fsa.hpp
+obj/main.o: src/main.cpp include/dfa.hpp include/fsa.hpp include/fsa.hpp \
+ include/drawer.hpp include/dfa.hpp
 	$(CXX) -c -o $@ $< $(CXXFLAGS)

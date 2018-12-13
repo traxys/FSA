@@ -1,4 +1,6 @@
 #include "dfa.hpp"
+#include "fsa.hpp"
+#include "drawer.hpp"
 
 #include <functional>
 #include <set>
@@ -11,8 +13,6 @@ int main(){
 	trTable['b'][0] = {'b'};
 	trTable['b'][1] = {'a'};
 	FSA<char, bool> testFSA({'a'},{'b'},trTable);
-	testFSA.printFSA();
-	//testFSA.determinate( {0,1} ).printFSA();
 	DFA<std::string, bool> testDFA(testFSA, {0,1});
-	testDFA.print();
+	dot_DFA(testDFA);
 }

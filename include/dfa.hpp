@@ -55,6 +55,16 @@ class DFA{
 			return finals.count(currentState) == 1;
 		}
 
+		T getInitial() const{
+			return initial;
+		}
+		std::set<T> getFinals() const{
+			return finals;
+		}
+		deltaFunction getDelta() const{
+			return delta;
+		}
+
 	private:
 		T initial;
 		std::set<T> finals;
