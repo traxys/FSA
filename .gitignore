@@ -1,0 +1,4 @@
+.d
+com*.json
+*.plist
+make_*py
