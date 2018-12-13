@@ -1,3 +1,6 @@
+#ifndef FSA_HPP
+#define FSA_HPP
+
 #include <unordered_map>
 #include <map>
 #include <functional>
@@ -5,7 +8,6 @@
 #include <sstream>
 #include <string>
 #include <iostream>
-#include <forward_list>
 
 template< typename T, typename V >
 class FSA{
@@ -136,3 +138,5 @@ inline std::ostream& operator<<(std::ostream& os,const std::set<T>&
 	os << " }";
 	return os;
 }
+
+#endif /* FSA_HPP */

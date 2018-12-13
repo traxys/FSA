@@ -1,3 +1,6 @@
+#ifndef DFA_HPP
+#define DFA_HPP
+
 #include "fsa.hpp"
 
 #include <map>
@@ -57,3 +60,5 @@ class DFA{
 		std::set<T> finals;
 		deltaFunction delta;
 };
+
+#endif /* DFA_HPP */
