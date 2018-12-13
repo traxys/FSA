@@ -22,10 +22,20 @@ std::ostringstream dot_DFA(const DFA<T,V>& dfa){
 	os << std::endl << "\t\"\" -> \"" << dfa.getInitial() <<
 		"\"" <<std::endl;
 	for(auto& tr : dfa.getDelta()){
+		std::map<T, std::set<V> > sameDest;
 		for(auto& letter : tr.second){
+			sameDest[letter.second].insert(letter.first);
+		}
+		for(auto& edge : sameDest){
 			os << "\t\"" << tr.first << "\" -> \""
-					  << letter.second  << "\"[label=\""
-					  << letter.first << "\"]" << std::endl;
+				<< edge.first  << "\"[label=\"";
+			std::string labels = "";
+			for(auto& letter : edge.second){
+				labels += std::to_string(letter) + ",";
+			}
+			labels.pop_back();
+			os << labels;
+			os << "\"]" << std::endl;
 		}
 	}
 	os << "}" << std::endl;
@@ -53,12 +63,22 @@ std::ostringstream dot_FSA(const FSA<T,V>& fsa){
 			"\"" <<std::endl;
 	}
 	for(auto& tr : trTable){
+		std::map<T, std::set<V> > sameDest;
 		for(auto& letter : tr.second){
 			for(auto& nextState : letter.second){
-				os << "\t\"" << tr.first << "\" -> \""
-					<< nextState  << "\"[label=\""
-					<< letter.first << "\"]" << std::endl;
+				sameDest[nextState].insert(letter.first);
 			}
+		}
+		for(auto& edge : sameDest){
+			os << "\t\"" << tr.first << "\" -> \""
+				<< edge.first  << "\"[label=\"";
+			std::string labels = "";
+			for(auto& letter : edge.second){
+				labels += std::to_string(letter) + ",";
+			}
+			labels.pop_back();
+			os << labels;
+			os << "\"]" << std::endl;
 		}
 	}
 	os << "}" << std::endl;
