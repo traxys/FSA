@@ -14,5 +14,5 @@ int main(){
 	trTable['b'][1] = {'a'};
 	FSA<char, bool> testFSA({'a'},{'b'},trTable);
 	DFA<std::string, bool> testDFA(testFSA, {0,1});
-	dot_DFA(testDFA);
+	std::cout << dot_FSA(testFSA).str();
 }
