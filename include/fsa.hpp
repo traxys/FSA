@@ -190,9 +190,37 @@ class FSA<T, epsilonAlphabet<V>>{
 			finalState(final_),
 			trTable(trTable_) {}
 		
-		FSA<T, V> removeEpsilon() const{
-			std::set<T> initials;
+		void accEps(std::set<T>& current, const T& from) const {
+			for(auto& tr : trTable.at(from)){
+				if(std::holds_alternative<epsilon>(tr.first)){
+					for(auto& state : tr.second){
+						if(current.count(state) == 0){
+							current.insert(state);
+							accEps(current, state);
+						}
+					}
+				}
+			}
+		}
+		
+		auto removeEpsilon() const{
 			std::set<T> finals;
+			typename FSA<T, V>::transitionTable newTrTable;
+			for(auto& state : trTable){
+				std::set<T> acc = {state.first};
+				accEps(acc, state.first);
+				for(auto& accState : acc){
+					if(finalState.count(accState) == 1){
+						finals.insert(accState);
+					}
+					for(auto& accTr : trTable.at(accState)){
+						if(!std::holds_alternative<epsilon>(accTr.first)){
+							newTrTable[state.first][std::get<V>(accTr.first)].insert(accTr.second.begin(), accTr.second.end());
+						}
+					}
+				}
+			}
+			return FSA<T, V>(initial, finals, newTrTable);
 		}
 		
 		void printTransition() const{
@@ -209,6 +237,39 @@ class FSA<T, epsilonAlphabet<V>>{
 			std::cout << "Finals : " << finalState << std::endl;
 			std::cout << "Transition : " << std::endl;
 			printTransition();
+		}
+		
+		template<typename NT>
+		FSA< NT, V > rename( std::function<NT(T)> converter ) const{
+			std::set<NT> newIni;
+			std::set<NT> newFinal;
+			for(auto& ini : initial){
+				newIni.insert(converter(ini));
+			}
+			for(auto& fin : finalState){
+				newFinal.insert(converter(fin));
+			}
+			std::map<NT, 
+				 	 std::unordered_map<V, 
+				                       std::set<NT> > > 
+												  newTrs;
+			for(auto& stateTr : trTable){
+				std::unordered_map<V, std::set<NT> > newStateTr;
+				for(auto& vocTr : stateTr.second){
+					std::set<NT> newFollowingSet;
+					for(auto& followingState : vocTr.second){
+						newFollowingSet.insert(converter(followingState));
+					}
+					newStateTr[vocTr.first] = newFollowingSet;
+				}
+				newTrs[converter(stateTr.first)] = newStateTr;
+			}
+			return FSA<NT, V>(newIni, newFinal, newTrs);
+		}
+
+
+		FSA<std::string, V> determinate(const std::set<V>& alph) const{
+			return removeEpsilon().determinate(alph);
 		}
 		
 		std::set<T> getInitial() const{

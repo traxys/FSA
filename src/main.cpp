@@ -29,5 +29,5 @@ int main(){
 	maps['c'][1] = {'c'};
 	epsFSAt FSAeps({'a'}, {'c'}, maps);
 	//FSAeps.printFSA();
-	std::cout << dot_FSA(FSAeps).str() << std::endl;
+	std::cout << dot_DFA(DFA<std::string, bool>(FSAeps.removeEpsilon(), {0,1})).str() << std::endl;
 }
