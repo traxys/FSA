@@ -21,5 +21,8 @@ include Rulefile
 
 .PHONY: clean
 
+doc:
+	doxygen docs/Doxyfile
+
 clean:
 	rm -f $(ODIR)/*.o $(BDIR)/*

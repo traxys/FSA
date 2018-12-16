@@ -10,15 +10,21 @@
 #include <iostream>
 #include <variant>
 
+/// \brief Class representing any type of Finite state automata
+/// with states of type T over a vocabulary of type V
 template< typename T, typename V >
 class FSA{
 	public:
+		/// \brief A map representing the transitions from state to state
 		using transitionTable = std::map<T, std::unordered_map<V, std::set<T> > >;
+		/// \brief Create a FSA from a map(state -> map(letter -> nextState))
 		FSA(const std::set<T>& initial_,const std::set<T>& final_,const transitionTable& trTable_) :
 			initial(initial_),
 			finalState(final_),
 			trTable(trTable_) {}
-
+	
+		/// \brief Rename all states
+		/// \param converter function used to transalate a type into the new type
 		template<typename NT>
 		FSA< NT, V > rename( std::function<NT(T)> converter ) const{
 			std::set<NT> newIni;
@@ -46,7 +52,9 @@ class FSA{
 			}
 			return FSA<NT, V>(newIni, newFinal, newTrs);
 		}
+	
 
+		/// \brief Prints the transition table
 		void printTransition() const{
 			for(auto& state : trTable){
 				for(auto& vocTr : state.second){
@@ -56,13 +64,15 @@ class FSA{
 			}
 		}
 
+		/// \brief Prints the FSA as a list of states
 		void printFSA() const{
 			std::cout << "Initials : " << initial << std::endl;
 			std::cout << "Finals : " << finalState << std::endl;
 			std::cout << "Transition : " << std::endl;
 			printTransition();
 		}
-
+		
+		/// \brief Determinates the FSA using an alphabet
 		FSA<std::string, V> determinate(const std::set<V>& alphabet)
 			const {
 			std::map< std::set<T> , 
@@ -112,13 +122,16 @@ class FSA{
 			return FSA<std::set<T>,V>(initials,finals,partsTrTable)\
 				.rename(conv);
 		};
-
+		
+		/// \brief Returns the initial states
 		std::set<T> getInitial() const{
 			return initial;
 		}
+		/// \brief Return the final states
 		std::set<T> getFinal() const{
 			return finalState;
 		}
+		/// \brief Returns the transition table
 		transitionTable getTransition() const{
 			return trTable;
 		}
@@ -129,6 +142,7 @@ class FSA{
 		transitionTable trTable; 
 };
 
+/// \brief prints a set in JSON form ({elem1, ..., elemN})
 template<typename T>
 inline std::ostream& operator<<(std::ostream& os,const std::set<T>&
 		elementSet){
@@ -140,23 +154,31 @@ inline std::ostream& operator<<(std::ostream& os,const std::set<T>&
 	return os;
 }
 
+/// \brief Epsilon value representing the empty word
 struct epsilon{
 	bool value;
 	epsilon() : value(false) {}
 };
 
+/// \brief All empty words are equal
 inline bool operator==(const epsilon&, const epsilon&){ return true; };
 
+
+/// \brief All empty words are equal
 inline bool operator<(const epsilon&, const epsilon&){ return false; };
 
+/// \brief All empty words are same
 inline std::ostream& operator<<(std::ostream& os,const epsilon&){
 	os << "ε";
 	return os;
 }
 
+/// \brief Alphabet of elements of V and the empty word
 template<typename V>
 using epsilonAlphabet = std::variant<V,epsilon>;
 
+/// \brief Transforms each letter from the variant type to
+/// the corresponding string representation
 template<typename V>
 inline std::ostream& operator<<(std::ostream& os,const epsilonAlphabet<V>& letter){
 	if(std::holds_alternative<epsilon>(letter)){
@@ -167,6 +189,7 @@ inline std::ostream& operator<<(std::ostream& os,const epsilonAlphabet<V>& lette
 	return os;
 }
 
+/// \brief hash each variant with either
 namespace std {
 		template <typename V> struct hash<epsilonAlphabet<V>>{
 			size_t operator()(const epsilonAlphabet<V>& a) const{
@@ -179,17 +202,22 @@ namespace std {
 		};
 } // namespace std;
 
+/// \brief Finite state automatas with epsilon transitions
 template<typename T, typename V>
 class FSA<T, epsilonAlphabet<V>>{
 	public:
+		/// \brief The alphabet type
 		using alphabet = epsilonAlphabet<V>;
+		/// \brief Transition table for the FSA
 		using epsTransitionTable = std::map<T, std::unordered_map<alphabet, std::set<T>>>;
 		
+		/// \brief Construct the FSA from the inital and final states with the transitions
 		FSA(const std::set<T>& initial_,const std::set<T>& final_,const epsTransitionTable& trTable_) :
 			initial(initial_),
 			finalState(final_),
 			trTable(trTable_) {}
 		
+		/// \brief Accumulate the neighours by epsilon transition of `from` in `current`
 		void accEps(std::set<T>& current, const T& from) const {
 			for(auto& tr : trTable.at(from)){
 				if(std::holds_alternative<epsilon>(tr.first)){
@@ -203,6 +231,7 @@ class FSA<T, epsilonAlphabet<V>>{
 			}
 		}
 		
+		/// \brief Returns an equivalent FSA without epsilon transition
 		auto removeEpsilon() const{
 			std::set<T> finals;
 			typename FSA<T, V>::transitionTable newTrTable;
@@ -223,6 +252,7 @@ class FSA<T, epsilonAlphabet<V>>{
 			return FSA<T, V>(initial, finals, newTrTable);
 		}
 		
+		/// \brief Print the transition table
 		void printTransition() const{
 			for(auto& state : trTable){
 				for(auto& vocTr : state.second){
@@ -232,6 +262,7 @@ class FSA<T, epsilonAlphabet<V>>{
 			}
 		}
 
+		/// \brief Print the FSA
 		void printFSA() const{
 			std::cout << "Initials : " << initial << std::endl;
 			std::cout << "Finals : " << finalState << std::endl;
@@ -239,6 +270,7 @@ class FSA<T, epsilonAlphabet<V>>{
 			printTransition();
 		}
 		
+		/// \brief Rename the states with converter
 		template<typename NT>
 		FSA< NT, V > rename( std::function<NT(T)> converter ) const{
 			std::set<NT> newIni;
@@ -267,17 +299,20 @@ class FSA<T, epsilonAlphabet<V>>{
 			return FSA<NT, V>(newIni, newFinal, newTrs);
 		}
 
-
+		/// \brief First remove the epsilon transitions then determinate
 		FSA<std::string, V> determinate(const std::set<V>& alph) const{
 			return removeEpsilon().determinate(alph);
 		}
 		
+		/// \brief Get the initial states
 		std::set<T> getInitial() const{
 			return initial;
 		}
+		/// \brief Get the final states
 		std::set<T> getFinal() const{
 			return finalState;
 		}
+		/// \brief Get the transtion table
 		epsTransitionTable getTransition() const{
 			return trTable;
 		}

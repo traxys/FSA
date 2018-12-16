@@ -3,3 +3,4 @@ com*.json
 *.plist
 make_*py
 *.png
+html
