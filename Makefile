@@ -7,7 +7,7 @@ SOURCES:=$(shell find src/ -name "*.cpp")
 DEPFILES:=$(patsubst %.cpp,%.d,$(SOURCES))
 
 CXX=g++
-CXXFLAGS=-I$(IDIR) -Wshadow -Wall -Wextra -DASIO_STANDALONE
+CXXFLAGS=-I$(IDIR) -Wshadow -Wall -Wextra -DASIO_STANDALONE -std=c++17
 OFLAGS=-O3 -march=native
 
 ODIR=obj

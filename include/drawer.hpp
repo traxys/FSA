@@ -31,7 +31,9 @@ std::ostringstream dot_DFA(const DFA<T,V>& dfa){
 				<< edge.first  << "\"[label=\"";
 			std::string labels = "";
 			for(auto& letter : edge.second){
-				labels += std::to_string(letter) + ",";
+				std::ostringstream osp;
+				osp << letter << ",";
+				labels += osp.str();
 			}
 			labels.pop_back();
 			os << labels;
@@ -74,7 +76,9 @@ std::ostringstream dot_FSA(const FSA<T,V>& fsa){
 				<< edge.first  << "\"[label=\"";
 			std::string labels = "";
 			for(auto& letter : edge.second){
-				labels += std::to_string(letter) + ",";
+				std::ostringstream osp;
+				osp << letter << ","; 
+				labels += osp.str();
 			}
 			labels.pop_back();
 			os << labels;

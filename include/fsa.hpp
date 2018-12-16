@@ -8,6 +8,7 @@
 #include <sstream>
 #include <string>
 #include <iostream>
+#include <variant>
 
 template< typename T, typename V >
 class FSA{
@@ -138,5 +139,91 @@ inline std::ostream& operator<<(std::ostream& os,const std::set<T>&
 	os << " }";
 	return os;
 }
+
+struct epsilon{
+	bool value;
+	epsilon() : value(false) {}
+};
+
+inline bool operator==(const epsilon&, const epsilon&){ return true; };
+
+inline bool operator<(const epsilon&, const epsilon&){ return false; };
+
+inline std::ostream& operator<<(std::ostream& os,const epsilon&){
+	os << "ε";
+	return os;
+}
+
+template<typename V>
+using epsilonAlphabet = std::variant<V,epsilon>;
+
+template<typename V>
+inline std::ostream& operator<<(std::ostream& os,const epsilonAlphabet<V>& letter){
+	if(std::holds_alternative<epsilon>(letter)){
+		os << std::get<epsilon>(letter);
+	}else{
+		os << std::get<V>(letter);
+	}
+	return os;
+}
+
+namespace std {
+		template <typename V> struct hash<epsilonAlphabet<V>>{
+			size_t operator()(const epsilonAlphabet<V>& a) const{
+				if(std::holds_alternative<epsilon>(a)){
+					return hash<string>()("krikatoktok");
+				}else{
+					return hash<V>()(std::get<V>(a));
+				}
+			}
+		};
+} // namespace std;
+
+template<typename T, typename V>
+class FSA<T, epsilonAlphabet<V>>{
+	public:
+		using alphabet = epsilonAlphabet<V>;
+		using epsTransitionTable = std::map<T, std::unordered_map<alphabet, std::set<T>>>;
+		
+		FSA(const std::set<T>& initial_,const std::set<T>& final_,const epsTransitionTable& trTable_) :
+			initial(initial_),
+			finalState(final_),
+			trTable(trTable_) {}
+		
+		FSA<T, V> removeEpsilon() const{
+			std::set<T> initials;
+			std::set<T> finals;
+		}
+		
+		void printTransition() const{
+			for(auto& state : trTable){
+				for(auto& vocTr : state.second){
+					std::cout << state.first << " : " << vocTr.first
+						<< " -> " << vocTr.second << std::endl;
+				}
+			}
+		}
+
+		void printFSA() const{
+			std::cout << "Initials : " << initial << std::endl;
+			std::cout << "Finals : " << finalState << std::endl;
+			std::cout << "Transition : " << std::endl;
+			printTransition();
+		}
+		
+		std::set<T> getInitial() const{
+			return initial;
+		}
+		std::set<T> getFinal() const{
+			return finalState;
+		}
+		epsTransitionTable getTransition() const{
+			return trTable;
+		}
+	private:
+		std::set<T> initial;
+		std::set<T> finalState;
+		epsTransitionTable trTable; 
+};
 
 #endif /* FSA_HPP */
