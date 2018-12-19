@@ -19,6 +19,25 @@ class DFA{
 			finals(finals_),
 			delta(delta_) {}
 		
+		template<typename NT>
+		DFA< NT, V > rename( std::function<NT(T)> converter ) const{
+			NT newIni = converter(initial);
+			std::set<NT> newFinal;
+			for(auto& fin : finals){
+				newFinal.insert(converter(fin));
+			}
+			std::map<NT, 
+				 	 std::unordered_map<V,NT>> newDelta;
+			for(auto& stateTr : delta){
+				std::unordered_map<V, NT > newStateTr;
+				for(auto& vocTr : stateTr.second){
+					newStateTr[vocTr.first] = converter(vocTr.second);
+				}
+				newDelta[converter(stateTr.first)] = newStateTr;
+			}
+			return DFA<NT, V>(newIni, newFinal, newDelta);
+		}
+
 		template<typename FSAT>
 		DFA(const FSA<FSAT,V>& fsa,
 			const std::set<V>& alphabet,
@@ -43,6 +62,91 @@ class DFA{
 						  	  << " -> " << tr.second << std::endl;
 				}
 			}
+		}
+
+		DFA<T, V> complete(const T& well, const std::set<V> alphabet) const{
+			auto cInit = initial;
+			auto cFinal = finals;
+			auto cDelta = delta;
+			bool addedState = false;
+			for(auto& state : cDelta){
+				for(auto& letter : alphabet){
+					if(state.second.count(letter) == 0){
+						state.second[letter] = well;
+						addedState = true;
+					}
+				}
+			}
+			if(addedState){
+				for(auto& letter : alphabet){
+					cDelta[well][letter] = well;
+				}
+			}
+			return DFA<T, V>(cInit, cFinal, cDelta);
+		}
+
+		DFA<T, V> minimalize(const T& well, const std::set<V>& alphabet) const{
+			auto completed = complete(well, alphabet);
+			std::set<std::set<T>> classes;
+			classes.insert(finals);
+			std::set<T> nonFinal;
+			for(auto& state : delta){
+				if(finals.count(state.first) == 0){
+					nonFinal.insert(state.first);
+				}
+			}
+			std::set<std::set<T>> newClass;
+			typename DFA< std::set<T>, V>::deltaFunction newDelta;
+			while(classes.size() != newClass.size()){
+				newDelta = DFA< std::set<T>, V>::deltaFunction();
+				for(auto& eqclass : classes){
+					std::map<std::map< V, std::set<T>>, std::set<T>> trClasses;
+					for(auto& state : eqclass){
+						std::map<V, std::set<T>> tr;
+						for(auto& nextState : delta.at(state)){
+							for(auto& destClass : classes){
+								if(destClass.count(nextState.second) == 1){
+									tr[nextState.count.first] = destClass;
+								}
+							}
+						}
+						trClasses[tr].insert(state);
+						newDelta[eqclass] = tr;
+					}
+					for(auto& flwSet : trClasses){
+						newClass.insert(flwSet.second);
+					}
+				}
+				classes = newClass;
+				newClass = {};
+			}
+			std::set<std::set<T>> newFinal;
+			for(auto& eqclass : classes){
+				bool isFinal = false;
+				for(auto& elem : eqclass){
+					if(finals.count(elem) == 1){
+						isFinal = true;
+						break;
+					}
+				}
+				if(isFinal){
+					newFinal.insert(classes);
+				}
+			}
+			std::set<T> newInitial;
+			for(auto& eqclass : classes){
+				for(auto& elem : eqclass){
+					if(elem == initial){
+						newInitial = eqclass;
+						break;
+					}
+				}
+				if(!newInitial.empty()){
+					break;
+				}
+			}
+			DFA<std::set<T>, V> minDFA(newInitial, newFinal, newDelta);
+			return minDFA.rename([](std::set<T> s){ return (*s.begin()); });
 		}
 
 		bool validate(const std::forward_list<V>& word){
